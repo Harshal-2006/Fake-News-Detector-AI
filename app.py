@@ -9,7 +9,7 @@ from newspaper import Article
 model = pickle.load(open('model.pkl', 'rb'))
 vectorizer = pickle.load(open('vectorizer.pkl', 'rb'))
 
-genai.configure(api_key="GEMINI_API_KEY")
+genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
 
 def clean_text(text):
     text = text.lower()
