@@ -56,7 +56,8 @@ if st.button("Analyze News"):
             st.subheader("🔍 Why is this fake? (AI Insights)")
             with st.spinner("Gemini is fact-checking..."):
                 prompt = f"Fact check this news: '{final_text}'. Explain why it is considered misinformation."
-                response = genai.GenerativeModel('gemini-flash-latest').generate_content(prompt)
+                response = genai.GenerativeModel('gemini-2.5-flash').generate_content(prompt)
                 st.write(response.text)
         else:
             st.success("✅ Result: THIS NEWS LOOKS REAL")
+
