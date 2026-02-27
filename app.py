@@ -5,11 +5,12 @@ import string
 import google.generativeai as genai
 from newspaper import Article
 
-#Loading data
+# Loading data
 model = pickle.load(open('model.pkl', 'rb'))
 vectorizer = pickle.load(open('vectorizer.pkl', 'rb'))
 
 genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+
 
 def clean_text(text):
     text = text.lower()
@@ -19,10 +20,9 @@ def clean_text(text):
     text = re.sub('<.*?>+', '', text)
     text = re.sub('[%s]' % re.escape(string.punctuation), '', text)
     text = re.sub('\n', '', text)
-    text = re.sub('\w*\d\w*', '', text)    
     return text
 
-#Streamlit 
+# Streamlit 
 st.set_page_config(page_title="AI Fake News Detector", page_icon="🛡️")
 st.markdown("### Welcome to the **AI-powered Fake News Detector**")
 st.write("Paste a news snippet or provide a link to a news article, and our ML model will verify its authenticity.")
@@ -48,16 +48,23 @@ if st.button("Analyze News"):
     if final_text:
         cleaned = clean_text(final_text)
         vectorized = vectorizer.transform([cleaned])
-        prediction = model.predict(vectorized)
         
+        prediction = model.predict(vectorized)
+        probability = model.predict_proba(vectorized)
+        confidence = max(probability[0]) 
+
         if prediction[0] == 0:
-            st.error("🚨 Result: THIS NEWS IS LIKELY FAKE")
+            st.error(f"🚨 Result: LIKELY FAKE")
+
+            st.progress(confidence, text=f"Model Confidence: {confidence*100:.2f}%")
             
-            st.subheader("🔍 Why is this fake? (AI Insights)")
-            with st.spinner("Gemini is fact-checking..."):
-                prompt = f"Fact check this news: '{final_text}'. Explain why it is considered misinformation."
+            st.subheader("🔍 Gemini is checking...")
+            with st.spinner("Analyzing claims with AI..."):
+                prompt = (f"The ML model is {confidence*100:.2f}% sure this is misinformation. "
+                          f"Fact check this news: '{final_text[:2000]}'. "
+                          f"Explain the accuracy based on 2026 data.")
                 response = genai.GenerativeModel('gemini-2.5-flash').generate_content(prompt)
                 st.write(response.text)
         else:
-            st.success("✅ Result: THIS NEWS LOOKS REAL")
-
+            st.success(f"✅ Result: LOOKS REAL")
+            st.progress(confidence, text=f"Model Confidence: {confidence*100:.2f}%")
